@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<porpoise-configuration>
+ <developer-id>xxxxxx</developer-id>
+ <developer-key>yyyyyy</developer-key>
+
+
+	<connectors>
+		<connector>
+			<name>MimaqPOIConnector</name>
+			<file>../layer/mimaq-poiconnector.php</file>
+		</connector>
+	</connectors>
+	
+	<layers>
+		<!-- MIMAQ -->
+		<layer>
+			<name>mimaq</name>
+			<connector>MimaqPOIConnector</connector>
+			<source></source>
+			<!--
+			<web_app>
+				<name>MimaqWebApp</name>
+				<file>../layer/mimaq-app.php</file>
+			</web_app>
+			-->
+		</layer>
+	</layers>
+</porpoise-configuration>
