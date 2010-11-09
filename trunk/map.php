@@ -59,30 +59,28 @@ class Mapper {
 	 */
 	public function getArea() {
 		$dbh = $this->initDb();
-		$sql = "SELECT
-			`id`, 
-			X(`location`) as `lon`, 
-			Y(`location`) as `lat`, 
-			CONCAT(DATE(`datetime`),'T',TIME(`datetime`),'+00:00') as `timestamp`,
-			`NOx`,
-			`COx`,
-			`noise`,
-			`humidity`,
-			`temperature`
-		FROM `sample`
-		WHERE `device_id`=:id
-		AND MBRContains(GeomFromText(:bbox), `location`)
-		AND DATE(`datetime`)=:date
-		ORDER BY `datetime` DESC
-		LIMIT 10000"; // hard limit
-
+		$sql = "SELECT 
+			g.`id`, 
+			X(g.`location`) as `lon`,
+			Y(g.`location`) as `lat`,
+			count(*) as `count`,
+			AVG(s.`NOx`) as NOx,
+			AVG(s.`COx`) as COx,
+			AVG(s.`noise`) as noise,
+			AVG(s.`humidity`) as humidity,
+			AVG(s.`temperature`) as temperature
+		FROM `grid50` g, `grid50_sample` gs, `sample` s
+		WHERE MBRContains(GeomFromText(:bbox), g.`location`)
+		AND gs.`grid_id` = g.`id`
+		AND gs.`sample_id` = s.`id`
+			GROUP BY g.`id`
+		LIMIT 500";
+		
 		$sth = $dbh->prepare($sql);
 		$sth->execute(array(
-				'id' => intval(@$_REQUEST['id']), 
-				'date' => preg_replace('/^.*?(\d{4}-\d{2}-\d{2}).*?$/', "$1", @$_REQUEST['date']),
 				'bbox' => $this->bboxAsWKT()
 			));
-		return $this->getPois($sth);
+		return $this->getAggregatedPois($sth);
 	}
 	
 	/**
@@ -115,24 +113,53 @@ class Mapper {
 			));
 		return $this->getPois($sth);
 	}
-	
+
+	private function getAggregatedPois($sth) {
+		$pois = array();
+		
+		$latMin = 90;
+		$latMax = -90;
+		$lonMin = 180;
+		$lonMax = -180;
+		$count = 0;
+		while ($row = $sth->fetch(PDO::FETCH_ASSOC)) {
+			$pois []= (Object) array(
+				'lat' => (float)$row['lat'],
+				'lon' => (float)$row['lon'],
+				'count' => (int)$row['count'],
+				'NOx' => (float)$row['NOx'], // raw sensor value
+				'COx' => (float)$row['COx'], // raw sensor value
+				'noise' => (float)$row['noise'],             // value in dBA
+				'humidity' => (float)$row['humidity'],       // value in %
+				'temperature' => (float)$row['temperature'], // value in ¡C
+			);
+			
+			$latMin = min($latMin, $row['lat']);
+			$lonMin = min($lonMin, $row['lon']);
+			$latMax = max($latMax, $row['lat']);
+			$lonMax = max($lonMax, $row['lon']);
+			$count++;
+		}
+		return array(
+			'results' => $count,
+			'pois' => $pois,
+			'bbox' => array((float)$latMin, (float)$lonMin, (float)$latMax, (float)$lonMax),
+			'center' => array(($latMin + $latMax)/2, ($lonMin+$lonMax)/2),
+		);
+	}
 	
 	private function getPois($sth) {
 		$pois = array();
-		$NOx = array();
-		//$COx = array();
 		
 		$latMin = 90;
 		$latMax = -90;
 		$lonMin = 180;
 		$lonMax = -180;
 		while ($row = $sth->fetch(PDO::FETCH_ASSOC)) {
-			$info = $this->getInfo($row);
 			$pois []= (Object) array(
 				'lat' => (float)$row['lat'],
 				'lon' => (float)$row['lon'],
 				'timestamp' => $row['timestamp'],
-				//'level' => (int)$info['level'], // deprecated
 				// 'NOx' => 465.0 - 128.0 * $row['NOx'], // value in µg.m-3 based on NO2
 				// 'COx' => 0.115 + 3.435 * $row['COx'], // value in mg.m-3
 				'NOx' => (float)$row['NOx'], // raw sensor value
@@ -285,34 +312,6 @@ class Mapper {
 		return $val['color'];
 	}
 
-	private function getInfo($row) {
-		// air quality scale 0..100%
-		// based on inverted sensor output voltage
-		// between 0..3.3 Volt, where 0V = polluted and 3.3V = clean
-		$NOx = $row['NOx'];
-		$this->levels['level'] = 100 - round(100 * $row['NOx'] / 3.3);
-		foreach ($this->levels as $level => $val) {
-			if ($NOx < $val['limit']) {
-				return array(
-						'icon' => sprintf("icn%s.png", $val['type']),
-						'color' => $val['color'],
-						'level' => $level,
-						'type' => $val['type'],
-						'text' => $val['text'],
-						'title' => $val['title'],
-					);
-			}
-		}
-		// overflow, use max level
-		return array(
-				'icon' => sprintf("icn%s.png", $val['type']),
-				'color' => $val['color'],
-				'level' => $level,
-				'type' => $val['type'],
-				'text' => $val['text'],
-				'title' => $val['title'],
-			);
-	}
 	
 	public function trackAsGpx($id, $date) {
 		$res = $this->getTrack($id, $date);

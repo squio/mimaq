@@ -206,6 +206,43 @@ var Mapper = {
 
 	},
 	
+	setArea: function() {
+		if (Mapper.dragListener) {
+			google.maps.event.removeListener(Mapper.dragListener);
+			Mapper.dragListener = null;
+		}
+		Mapper.clearPolys();
+		Mapper.clearMarkers();
+		Mapper.mapType = 'area';
+		var ne = Mapper.map.getBounds().getNorthEast();
+		var sw = Mapper.map.getBounds().getSouthWest();
+		var url = Mapper.baseUrl + "?type=area&neLat=" + ne.lat() + "&neLon=" + ne.lng() + "&swLat=" + sw.lat() + "&swLon=" + sw.lng();
+
+		var opts = {
+		    strokeColor: "#cc0000",
+		    strokeOpacity: 0.5,
+		    strokeWeight: 55,
+			path: [],
+			time: null
+		};
+		
+		
+		jQuery.getJSON(url + "&callback=?", function(data) {
+			for (var i=0; i<data.pois.length; i++) {
+				var d = data.pois[i];
+				newLoc = new google.maps.LatLng(d.lat, d.lon);
+				var level = Mapper.getLevel(d.NOx);
+				opts.strokeColor = level.color;
+				opts.NOx = d.NOx;
+				opts.strokeWeight = d.count; // doesn't work, maps API v3 limits to 10 pixels
+				opts.path = [newLoc];
+				opts.path.push(new google.maps.LatLng(d.lat + 0.00001, d.lon + 0.00001));
+				Mapper.setPoly(opts);
+			}
+		});
+	},
+
+
 	setPoly: function(opts) {
 		var p = new google.maps.Polyline(opts);
 		google.maps.event.addListener(p, 'click', function(e) {
@@ -214,9 +251,12 @@ var Mapper = {
 			}
 			var lvlInfo = Mapper.getLevel(this.NOx);
 			var icon = "http://api.worldservr.com/mimaq/gfx/" + lvlInfo.type + ".png";
-			var d = new Date(this.time);
-			var min = d.getMinutes();
-			var timeStr = '' + d.getHours() + ':' + ((min > 9) ? min : '0' + min);
+			var timeStr = '';
+			if (this.time) {
+				var d = new Date(this.time);
+				var min = d.getMinutes();
+				timeStr = '<em>meting ca. ' + d.getHours() + ':' + ((min > 9) ? min : '0' + min) + ' uur</em>';
+			}
 			Mapper.lastInfoWindow = new google.maps.InfoWindow({
 			    maxWidth: 350,
 				// context = polyline 'p'
@@ -224,8 +264,8 @@ var Mapper = {
 					"<img src='" + icon + "' style='float:right;width:80px'><strong>" + 
 			    	lvlInfo.title + "</strong><br>" +
 			    	lvlInfo.text + "<br>" + 
-					'NOx: ' + (100 - Math.round(100 * this.NOx / 3.3)) + "% van sensor max.<br><em>meting ca. " +
-			    	timeStr + " uur</em></div>"
+					'NOx: ' + (100 - Math.round(100 * this.NOx / 3.3)) + "% van sensor max.<br>"+
+			    	timeStr + "</div>"
 			}); 
 			Mapper.lastInfoWindow.setPosition(e.latLng); 
 			Mapper.lastInfoWindow.open(Mapper.map); 
