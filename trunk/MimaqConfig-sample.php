@@ -9,6 +9,10 @@
  * holds MIMAQ configuration parameters
  */
 class MimaqConfig {
+	/**
+	 * Local database configuration
+	 *
+	 */
 	public static function getDbConf() {
 		if (@$_SERVER['HTTP_HOST'] === 'localhost:8888') {
 			// parameters for running under MAMP
@@ -24,5 +28,17 @@ class MimaqConfig {
 				'pass' => 'PASSWORD'   // and this
 			);
 		}
+	}
+	
+	/**
+	 * Raw data source DB configuration
+	 *
+	 */
+	public static function getDataDbConfig() {
+			return array(
+				'DSN' => 'mysql:host=vendor.com;dbname=XXXX;port=3306',
+				'user' => 'USERNAME',
+				'pass' => 'PASSWORD'
+			);
 	}
 }

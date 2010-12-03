@@ -1,3 +1,7 @@
+--
+-- * Copyright 2010 MIMAQ
+-- * Released under a permissive license (see LICENSE)
+--
 
 
 SET SQL_MODE="NO_AUTO_VALUE_ON_ZERO";

@@ -1,3 +1,7 @@
+--
+-- * Copyright 2010 MIMAQ
+-- * Released under a permissive license (see LICENSE)
+--
 
 -- Measurement days:
 	SELECT date( `datetime` ) AS `d`, COUNT(*) as `count`

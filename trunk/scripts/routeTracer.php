@@ -47,6 +47,26 @@ class RouteTracer {
 //		$this->state_sth = $this->db->prepare("UPDATE device set `last_frame_id` = :frame_id WHERE `bt_address`=:bt_address");
 	}
 
+	public function trip_tracker() {
+		$sample_sth = $this->db->prepare(
+			'SELECT `id`, Y(`location`) as `lat`, X(`location`) as `lon`, `datetime`, `NOx`, `COx`, `noise`, `humidity`, `temperature` FROM `sample` ' . 
+ 			'WHERE `id` > (SELECT MAX(t.`sample_id`) FROM `trip_sample` t LEFT JOIN `sample` s on s.`id`=t.`sample_id` WHERE t.`device_id`=:device_id) ORDER BY `id` ASC'
+		);
+		$list = $this->getDevices();
+		foreach ($list as $sample_id => $name) {
+			$sample_sth->execute(array('sample_id' => $sample_id));
+			while ($sample = $sample_sth->fetch(PDO::FETCH_ASSOC)) {
+				// rerieve data, keep track of averages and bbox
+			}
+		}
+	}
+	
+	protected function getDevices() {
+		$res = $this->db->query("SELECT `id`, `name` FROM `device` WHERE `active` = 1");
+		$list = $res->fetchAll(PDO::FETCH_ASSOC);
+		return $list;
+	}
+	
 	public function map_to_grid() {
 		$res = $this->sample_sth->execute();
 		if (!$this->sample_sth->rowCount()) {
