@@ -11,7 +11,7 @@ ini_set('error_reporting', E_ALL);
 /**
  * Based on Cop15 / ConversionTool
  * 
- * Retrieves and converts raw data from Senasaris database and stores 
+ * Retrieves and converts raw data from Sensaris database and stores 
  * full measurement events in local MIMAQ database
  * 
  * @author joe
@@ -56,7 +56,12 @@ require_once('../MimaqConfig.php');
 	 * Main processing loop
 	 */
 	public function main() {
-		$src_db = new PDO('mysql:host=sensaris.com;dbname=titan;port=3306', 'sn_reader', 'jp9AX3PZ');
+		$dbconf = MimaqConfig::getDataDbConfig();
+		$src_db = new PDO(
+				$dbconf['DSN'], 
+				$dbconf['user'], 
+				$dbconf['pass']
+			);
 		$src_sth = $src_db->prepare("SELECT `id`, `frame` FROM `frame` WHERE `id` > :last_frame_id AND `device_bt_address`=:bt_addr");
 
 		foreach($this->getActiveDevices() as $device) {

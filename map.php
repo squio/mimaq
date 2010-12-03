@@ -324,7 +324,7 @@ class Mapper {
 	 	/>');
 		$trk = $gpx->addChild('trk');
 		$trk->addChild('name', 'MIMAQ track ' . $date);
-		$trk->addChild('copyright', '(c) 2010 CC BY-NC-SA');
+		$trk->addChild('copyright', 'CC0 http://creativecommons.org/publicdomain/zero/1.0/'); // Almost the same as public domain
 		$trk->addChild('link', 'http://mimaq.org');
 		$t = $trk->addChild('trkseg');
 		foreach($res['pois'] as $poi) {

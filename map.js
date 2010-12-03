@@ -4,33 +4,21 @@
  * Released under a permissive license (see LICENSE)
  */
 
-/**
- * Date.parse with progressive enhancement for ISO-8601
- * © 2010 Colin Snover <http://zetafleet.com>
- * Released under MIT license.
- */
-(function () {
-    'use strict';
-    var origParse = Date.parse;
-    Date.parse = function (date) {
-        var timestamp = origParse(date), minutesOffset = 0, struct;
-        if (isNaN(timestamp) && (struct = /(\d{4})-?(\d{2})-?(\d{2})(?:[T ](\d{2}):?(\d{2}):?(\d{2})(?:\.(\d{3,}))?(?:(Z)|([+\-])(\d{2})(?::?(\d{2}))?))/.exec(date))) {
-            if (struct[8] !== 'Z') {
-                minutesOffset = +struct[10] * 60 + (+struct[11]);
-                
-                if (struct[9] === '+') {
-                    minutesOffset = 0 - minutesOffset;
-                }
-            }
-            var s7 = (struct[7]) ? +struct[7].substr(0, 3) : 0;
-            timestamp = Date.UTC(+struct[1], +struct[2] - 1, +struct[3], +struct[4], +struct[5] + minutesOffset, +struct[6], s7);
-        }
-        
-        return timestamp;
-    };
-}());
-
 var Mapper = {
+	// CONFIGURE THIS:
+	baseUrl: ((window.location.host.indexOf('localhost') === 0) ? 'map.php' : 'http://api.worldservr.com/mimaq/map.php'),
+	
+	// Localization:
+	lvlInfo: [
+		{'limit': 0.55, 'type': 3, 'title': 'NOx nivo zeer hoog',     'text': 'Zeer veel vervuiling, andere route aanbevolen.', 'color': '#cc0000'},
+		{'limit': 1.10, 'type': 3, 'title': 'NOx nivo is hoog',       'text': 'Veel vervuiling, probeer een andere route.', 'color': '#ff3300'},
+		{'limit': 1.65, 'type': 2, 'title': 'NOx meer dan gemiddeld', 'text': 'Niet goed maar ook niet gevaarlijk.', 'color': '#ffcc00'},
+		{'limit': 2.20, 'type': 2, 'title': 'NOx minder dan gemiddeld', 'text': 'Redelijke luchtkwaliteit.', 'color': '#ffff00'},
+		{'limit': 2.75, 'type': 1, 'title': 'NOx nivo is laag',       'text': 'Mooi, hier is de luchtkwaliteit goed.', 'color': '#ccff00'},
+		{'limit': 3.30, 'type': 1, 'title': 'NOx nivo is zeer laag',  'text': 'Beter kan niet, hier is schone lucht.', 'color': '#00ff00'}
+	],
+
+	// END CONFIGURE
 	polys: [],
 	markers: [],
 	oldMarkers:[],
@@ -40,18 +28,8 @@ var Mapper = {
 	intvTimer: null,
 	marker: null,
 	lastInfoWindow: null,
-	baseUrl: (window.location.host.indexOf('localhost') === 0) ? 'map.php' : 'http://api.worldservr.com/mimaq/map.php',
 	dragListener: null,
 	mapType: 'area',
-
-	lvlInfo: [
-		{'limit': 0.55, 'type': 3, 'title': 'NOx nivo zeer hoog',     'text': 'Zeer veel vervuiling, andere route aanbevolen.', 'color': '#cc0000'},
-		{'limit': 1.10, 'type': 3, 'title': 'NOx nivo is hoog',       'text': 'Veel vervuiling, probeer een andere route.', 'color': '#ff3300'},
-		{'limit': 1.65, 'type': 2, 'title': 'NOx meer dan gemiddeld', 'text': 'Niet goed maar ook niet gevaarlijk.', 'color': '#ffcc00'},
-		{'limit': 2.20, 'type': 2, 'title': 'NOx minder dan gemiddeld', 'text': 'Redelijke luchtkwaliteit.', 'color': '#ffff00'},
-		{'limit': 2.75, 'type': 1, 'title': 'NOx nivo is laag',       'text': 'Mooi, hier is de luchtkwaliteit goed.', 'color': '#ccff00'},
-		{'limit': 3.30, 'type': 1, 'title': 'NOx nivo is zeer laag',  'text': 'Beter kan niet, hier is schone lucht.', 'color': '#00ff00'}
-	],
 
 	init: function(mapElt) {
 		var myOptions = {
@@ -318,4 +296,31 @@ var Mapper = {
  		//Mapper.dragListener = google.maps.event.addListener(Mapper.map, 'bounds_changed', Mapper.update);
  	},
 		
-} 
+}; // Mapper
+
+/**
+ * Date.parse with progressive enhancement for ISO-8601
+ * © 2010 Colin Snover <http://zetafleet.com>
+ * Released under MIT license.
+ */
+(function () {
+    'use strict';
+    var origParse = Date.parse;
+    Date.parse = function (date) {
+        var timestamp = origParse(date), minutesOffset = 0, struct;
+        if (isNaN(timestamp) && (struct = /(\d{4})-?(\d{2})-?(\d{2})(?:[T ](\d{2}):?(\d{2}):?(\d{2})(?:\.(\d{3,}))?(?:(Z)|([+\-])(\d{2})(?::?(\d{2}))?))/.exec(date))) {
+            if (struct[8] !== 'Z') {
+                minutesOffset = +struct[10] * 60 + (+struct[11]);
+                
+                if (struct[9] === '+') {
+                    minutesOffset = 0 - minutesOffset;
+                }
+            }
+            var s7 = (struct[7]) ? +struct[7].substr(0, 3) : 0;
+            timestamp = Date.UTC(+struct[1], +struct[2] - 1, +struct[3], +struct[4], +struct[5] + minutesOffset, +struct[6], s7);
+        }
+        
+        return timestamp;
+    };
+}());
+
