@@ -1,0 +1,31 @@
+Basic instructions for installation on a web server host
+
+The scripts were developed on a Unix based server (Mac, Linux) with Apache and MySQL 
+
+1. Global configuration
+ * Create a local MySQL database "mimaq" from the schema found in scripts/mimaq.sql
+ * Copy MimaqConfig-sample.php to MimaqConfig.php
+ * Configure the database settings for your situation
+ * Put the configuration somewhere outside your server's codument root 
+
+2. Sampling scripts
+ * Add scripts/dataConverter to your crontab (Unix) or services (Windows) 
+   to run each minute as appropriate
+ * Verify that data samples are stored in the local mimaq database 
+
+3. Mapping visualisation
+ * Put files map.html, map.php and map.js below a web server document root
+ * Put the 
+ * Adapt the line require_once('MimaqConfig.php') to point at the right location
+ * Open map.html in your web browser and verify that data can be displayed
+
+4. Augmented Reality view
+ * Put the file porpoise.php below your server's document root
+ * Make sure that the directory layer is outside your document root
+ * Make sure that the directory vendor is outside your document root
+ * Configure the paths to these directories:
+ * define("PORPOISE_CONFIG_PATH", "../../layer");
+ * chdir(dirname(__FILE__) . "/vendor/PorPOISe");
+ * Create a developer account at http://layar.com
+ * Configure your layer with API endpoint http://your-server.com/path-to/porpoise.php
+ 
